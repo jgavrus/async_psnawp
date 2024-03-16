@@ -1,3 +1,4 @@
+# this lib will 1 to 1 like original psnawp, but async, now in development
 # <img src="docs/_static/psn_logo.png" height="35px"> PlayStation Network API Wrapper Python (PSNAWP)
 
 Retrieve User Information, Trophies, Game and Store data from the PlayStation Network
