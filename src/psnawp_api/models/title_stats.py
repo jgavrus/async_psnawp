@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from abc import ABC
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional, Iterator, Any
+from typing import Optional, Any, AsyncIterator
 
 from attrs import define
 
@@ -61,7 +62,8 @@ class TitleStats:
         return title_instance
 
     @classmethod
-    def from_endpoint(cls, request_builder: RequestBuilder, account_id: str, limit: Optional[int]) -> Iterator[TitleStats]:
+    async def from_endpoint(cls, request_builder: RequestBuilder, account_id: str, limit: Optional[int]
+                            ) -> AsyncIterator[TitleStats]:
         offset = 0
         limit_per_page = min(limit, 500) if limit is not None else 500
         params: dict[str, Any] = {"categories": "ps4_game,ps5_native_game", "limit": limit_per_page, "offset": offset}
@@ -69,10 +71,11 @@ class TitleStats:
         while True:
             params["offset"] = offset
             try:
-                response = request_builder.get(
+                response = await request_builder.get(
                     url=f"{BASE_PATH['games_list']}{API_PATH['user_game_data'].format(account_id=account_id)}",
                     params=params,
-                ).json()
+                )
+                response = await response.json()
             except PSNAWPForbidden as forbidden:
                 raise PSNAWPForbidden("The following user has made their profile private.") from forbidden
 
@@ -98,7 +101,7 @@ class TitleStats:
                 break
 
 
-class TitleStatsListing(Iterator[TitleStats]):
+class TitleStatsListing(AsyncIterator[TitleStats], ABC):
     """Iterator for retrieving title statistics.
 
     This iterator fetches title statistics for a given account ID with pagination support.
@@ -124,7 +127,8 @@ class TitleStatsListing(Iterator[TitleStats]):
         params: dict[str, Any] = {"categories": "ps4_game,ps5_native_game", **pagination_arguments.get_params_dict()}
         url = f"{BASE_PATH['games_list']}{API_PATH['user_game_data'].format(account_id=account_id)}"
 
-        self.title_stats_paginator = ListingGenerator(request_builder=request_builder, url=url, listing_name="titles", params=params)
+        self.title_stats_paginator = ListingGenerator(request_builder=request_builder, url=url, listing_name="titles",
+                                                      params=params)
         self._pagination_arguments = pagination_arguments
         self.count = 0
         self.total_item_count = 0
@@ -132,12 +136,13 @@ class TitleStatsListing(Iterator[TitleStats]):
     def __iter__(self) -> TitleStatsListing:
         return self
 
-    def __next__(self) -> TitleStats:
+    async def __anext__(self) -> TitleStats:
         if self._pagination_arguments.total_limit is not None:
             if self.count == self._pagination_arguments.total_limit:
                 raise StopIteration
 
-        response = next(self.title_stats_paginator)
+        response = await anext(self.title_stats_paginator)
+
         self.total_item_count = response["totalItemCount"]
         self.count += 1
         return TitleStats.from_dict({**response["item"]})

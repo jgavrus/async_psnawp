@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import logging
-from typing import overload, Optional, Iterator, Any
+from typing import overload, Optional, Any, AsyncIterator
 
-from psnawp_api.core import authenticator
+from aiohttp import ClientSession
+
+from psnawp_api.core.authenticator import Authenticator
 from psnawp_api.core.psnawp_exceptions import PSNAWPIllegalArgumentError
 from psnawp_api.models.client import Client
 from psnawp_api.models.game_title import GameTitle
 from psnawp_api.models.group import Group
 from psnawp_api.models.search import Search
 from psnawp_api.models.user import User
-from psnawp_api.utils import request_builder
+from psnawp_api.utils.misc import create_session
+from psnawp_api.utils.request_builder import RequestBuilder
 
 logging_level = logging.INFO
 
@@ -37,9 +40,17 @@ class PSNAWP:
         :raises: ``PSNAWPAuthenticationError`` If npsso code is expired or is incorrect.
 
         """
-        self._request_builder = request_builder.RequestBuilder(authenticator.Authenticator(npsso_cookie), accept_language, country)
+        self.npsso_cookie = npsso_cookie
+        self.accept_language = accept_language
+        self.country = country
+        self._request_builder: Optional[RequestBuilder] = None
 
-    def me(self) -> Client:
+    async def init(self):
+        authenticator = Authenticator(self.npsso_cookie)
+        self._request_builder = RequestBuilder(authenticator, self.accept_language, self.country)
+
+    # @property
+    async def me(self) -> Client:
         """Creates a new client object (your account).
 
         :returns: Client Object
@@ -52,17 +63,19 @@ class PSNAWP:
             client = psnawp.me()
 
         """
+        if not self._request_builder:
+            await self.init()
         return Client(self._request_builder)
 
     @overload
-    def user(self, *, online_id: str) -> User:
+    async def user(self, *, online_id: str) -> User:
         ...
 
     @overload
-    def user(self, *, account_id: str) -> User:
+    async def user(self, *, account_id: str) -> User:
         ...
 
-    def user(self, **kwargs: Any) -> User:
+    async def user(self, **kwargs: Any) -> User:
         """Creates a new user object using Online ID (GamerTag) or Account ID (PSN ID).
 
         .. note::
@@ -85,17 +98,20 @@ class PSNAWP:
             user2 = psnawp.user(account_id='1802043923080044300')
 
         """
+        if not self._request_builder:
+            await self.init()
         online_id: Optional[str] = kwargs.get("online_id")
         account_id: Optional[str] = kwargs.get("account_id")
 
         if account_id is not None:
-            return User.from_account_id(self._request_builder, account_id)
+            return await User.from_account_id(self._request_builder, account_id)
         elif online_id is not None:
-            return User.from_online_id(self._request_builder, online_id)
+            return await User.from_online_id(self._request_builder, online_id)
         else:
             raise PSNAWPIllegalArgumentError("You must provide at least online ID or account ID.")
 
-    def game_title(self, title_id: str, account_id: str = "6515971742264256071", np_communication_id: Optional[str] = None) -> GameTitle:
+    def game_title(self, title_id: str, account_id: str = "6515971742264256071",
+                   np_communication_id: Optional[str] = None) -> GameTitle:
         """Creates a GameTitle class object from title_id which represents a PlayStation video game title.
 
         .. note::
@@ -127,17 +143,18 @@ class PSNAWP:
         :raises: ``PSNAWPNotFound`` If the user does not have any trophies for that game or the game doesn't exist.
 
         """
-        return GameTitle(self._request_builder, title_id=title_id, account_id=account_id, np_communication_id=np_communication_id)
+        return GameTitle(self._request_builder, title_id=title_id, account_id=account_id,
+                         np_communication_id=np_communication_id)
 
     @overload
-    def group(self, *, group_id: str) -> Group:
+    async def group(self, *, group_id: str) -> Group:
         ...
 
     @overload
-    def group(self, *, users_list: Iterator[User]) -> Group:
+    async def group(self, *, users_list: AsyncIterator[User]) -> Group:
         ...
 
-    def group(self, **kwargs: Any) -> Group:
+    async def group(self, **kwargs: Any) -> Group:
         """Creates a group object from a Group ID or from list of users.
 
         .. warning::
@@ -156,18 +173,21 @@ class PSNAWP:
         :raises: ``PSNAWPForbidden`` If you are Dming a user who has blocked you.
 
         """
-
+        if not self._request_builder:
+            await self.init()
         group_id: Optional[str] = kwargs.get("group_id")
-        users: Optional[Iterator[User]] = kwargs.get("users_list")
+        users: Optional[AsyncIterator[User]] = kwargs.get("users_list")
 
         if (group_id and users) or not (group_id or users):
             raise PSNAWPIllegalArgumentError("You provide at least Group Id or Users, and not both.")
         return Group(self._request_builder, group_id=group_id, users=users)
 
-    def search(self) -> Search:
+    async def search(self) -> Search:
         """Creates a new search object
 
         :returns: Search Object
 
         """
+        if not self._request_builder:
+            await self.init()
         return Search(self._request_builder)

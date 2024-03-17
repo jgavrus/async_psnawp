@@ -1,11 +1,41 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
 import re
 
+import aiohttp
+
 from psnawp_api import psnawp
+
+
+def create_session(fn):
+    async def wrapper(*args, **kwargs):
+        e = None
+        for _ in range(10):
+            try:
+                if kwargs.get('session'):
+                    return await fn(*args, **kwargs)
+
+                async with aiohttp.ClientSession() as session:
+                    return await fn(*args, session=session, **kwargs)
+            except Exception as er:
+                e = er
+                continue
+        else:
+            raise e
+
+    return wrapper
+
+
+async def async_zip(iter1, iter2):
+    iter1 = iter1.__aiter__()
+    iter2 = iter2.__aiter__()
+    while True:
+        val1, val2 = await asyncio.gather(iter1.__anext__(), iter2.__anext__())
+        yield val1, val2
 
 
 def create_logger(module_name: str) -> logging.Logger:

@@ -11,56 +11,56 @@ from psnawp_api.models.trophies.trophy_constants import PlatformType
 from tests.unit_tests import my_vcr
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__user(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         user_example = psnawp_fixture.user(online_id="VaultTec_Trading")
         assert user_example.online_id == "VaultTec_Trading"
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__user_account_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         user_example = psnawp_fixture.user(account_id="8520698476712646544")
         assert user_example.online_id == "VaultTec_Trading"
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__user_no_argument(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPIllegalArgumentError):
             psnawp_fixture.user()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__user_wrong_acc_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
             psnawp_fixture.user(account_id="VaultTec-Co")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__prev_online_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         user_example = psnawp_fixture.user(online_id="EvangelionKills")
         assert user_example.online_id == "kerksten"
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__user_not_found(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
             psnawp_fixture.user(online_id="dfhlidsahfdszh")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__user_acct_id_not_found(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
             psnawp_fixture.user(account_id="0000000000000000000")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__get_profile(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         profile = psnawp_fixture.user(online_id="VaultTec_Trading").profile()
@@ -71,32 +71,32 @@ def test_user__get_profile(psnawp_fixture):
         assert profile.get("isOfficiallyVerified") is False
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__get_presence(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         psnawp_fixture.user(online_id="VaultTec_Trading").get_presence()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__get_presence_forbidden(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPForbidden):
             psnawp_fixture.user(online_id="kerksten").get_presence()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__friendship(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         psnawp_fixture.user(online_id="jeranther").friendship()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__is_blocked(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         assert not psnawp_fixture.user(online_id="jeranther").is_blocked()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_summary(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         summary = psnawp_fixture.user(online_id="VaultTec_Trading").trophy_summary()
@@ -110,14 +110,14 @@ def test_user__trophy_summary(psnawp_fixture):
         assert summary.trophy_level == 1
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_summary_forbidden(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPForbidden):
             psnawp_fixture.user(online_id="kerksten").trophy_summary()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_titles(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         actual_count = 0
@@ -133,7 +133,7 @@ def test_user__trophy_titles(psnawp_fixture):
         assert actual_count == 100
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_titles_forbidden(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPForbidden):
@@ -141,7 +141,7 @@ def test_user__trophy_titles_forbidden(psnawp_fixture):
                 print(trophy_title)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_titles_pagination_test(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         total_count = 0
@@ -159,7 +159,7 @@ def test_user__trophy_titles_pagination_test(psnawp_fixture):
         assert total_count == actual_count
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_titles_for_title(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         for trophy_title in psnawp_fixture.user(online_id="jeranther").trophy_titles_for_title(title_ids=["PPSA01506_00", "CUSA12057_00", "CUSA00419_00"]):
@@ -178,7 +178,7 @@ def test_user__trophy_titles_for_title(psnawp_fixture):
                 assert trophy_title.np_title_id == "CUSA00419_00"
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_titles_for_title_forbidden(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPForbidden):
@@ -186,7 +186,7 @@ def test_user__trophy_titles_for_title_forbidden(psnawp_fixture):
                 print(trophy_title)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophies(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         earned_status = list(psnawp_fixture.user(online_id="jeranther").trophies("NPWR15509_00", "PS4", limit=10))
@@ -206,7 +206,7 @@ def test_user__trophies(psnawp_fixture):
             assert zipped_data[0].trophy_earn_rate == zipped_data[1].trophy_earn_rate
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophies_forbidden(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPForbidden):
@@ -216,7 +216,7 @@ def test_user__trophies_forbidden(psnawp_fixture):
             list(psnawp_fixture.user(online_id="kerksten").trophies("NPWR15509_00", "PS4", limit=10, include_metadata=True))
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophies_pagination_test(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         earned_status = list(psnawp_fixture.user(online_id="ikemenzi").trophies("NPWR08964_00", "PS4"))
@@ -236,7 +236,7 @@ def test_user__trophies_pagination_test(psnawp_fixture):
             assert zipped_data[0].trophy_earn_rate == zipped_data[1].trophy_earn_rate
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_groups_summary(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         earned_status = psnawp_fixture.user(online_id="jeranther").trophy_groups_summary("NPWR15509_00", "PS4")
@@ -255,7 +255,7 @@ def test_user__trophy_groups_summary(psnawp_fixture):
             assert zipped_data[0].last_updated_datetime == zipped_data[1].last_updated_datetime
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__trophy_groups_summary_forbidden(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPForbidden):
@@ -265,7 +265,7 @@ def test_user__trophy_groups_summary_forbidden(psnawp_fixture):
             psnawp_fixture.user(online_id="kerksten").trophy_groups_summary("NPWR15509_00", "PS4", include_metadata=True)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__title_stats(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         total_count = 0
@@ -275,7 +275,7 @@ def test_user__title_stats(psnawp_fixture):
         assert total_count == len(title_stat_iter)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__title_stats_with_limit(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         limit = 1050
@@ -284,7 +284,7 @@ def test_user__title_stats_with_limit(psnawp_fixture):
         assert title_count == limit
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__title_stats_with_jump(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         limit = 10
@@ -293,7 +293,7 @@ def test_user__title_stats_with_jump(psnawp_fixture):
         assert titles[9] == tenth_title
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_user__repr_and_str(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         user_example = psnawp_fixture.user(online_id="VaultTec-Co")

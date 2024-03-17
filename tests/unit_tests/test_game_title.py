@@ -6,21 +6,21 @@ from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound
 from tests.unit_tests import my_vcr
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__np_communication_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         game_title = psnawp_fixture.game_title(title_id="PPSA03420_00")
         assert game_title.np_communication_id == "NPWR21647_00"
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__wrong_title_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
             psnawp_fixture.game_title(title_id="SSSA01325_00")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__get_title_details(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         game_title = psnawp_fixture.game_title(title_id="PPSA03420_00")
@@ -28,7 +28,7 @@ def test_game_title__get_title_details(psnawp_fixture):
         assert title_details[0].get("name") == "Grand Theft Auto V (PlayStation®5)"
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__trophies(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         game_title = psnawp_fixture.game_title(title_id="PPSA03420_00")
@@ -47,7 +47,7 @@ def test_game_title__trophies(psnawp_fixture):
         assert total_count == actual_count
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__trophy_groups_summary(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         game_title = psnawp_fixture.game_title(title_id="PPSA01325_00")
@@ -65,21 +65,21 @@ def test_game_title__trophy_groups_summary(psnawp_fixture):
             assert trophy_group_summary.defined_trophies is not None
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__trophies_game_not_owned_by_user(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
             psnawp_fixture.game_title(title_id="PPSA03420_00", account_id="me")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__trophy_groups_summary_game_not_owned_by_user(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
             psnawp_fixture.game_title(title_id="PPSA01325_00", account_id="me")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__trophies_invalid_np_communication_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
@@ -88,7 +88,7 @@ def test_game_title__trophies_invalid_np_communication_id(psnawp_fixture):
                 print(trophy)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_game_title__trophy_groups_summary_invalid_np_communication_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):

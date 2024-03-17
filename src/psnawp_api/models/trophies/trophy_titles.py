@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, Iterator, Any
+from typing import Optional, Any, AsyncIterator
 
 from attrs import define, field
 
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPBadRequest
 from psnawp_api.models.trophies.trophy import Trophy
 from psnawp_api.models.trophies.trophy_constants import TrophySet, PlatformType
-
 from psnawp_api.utils.endpoints import BASE_PATH, API_PATH
 from psnawp_api.utils.misc import iso_format_to_datetime
 from psnawp_api.utils.request_builder import RequestBuilder
@@ -74,7 +73,7 @@ class TrophyTitles:
         self._request_builder = request_builder
         self._account_id = account_id
 
-    def get_trophy_titles(self, limit: Optional[int]) -> Iterator[TrophyTitle]:
+    async def get_trophy_titles(self, limit: Optional[int]) -> AsyncIterator[TrophyTitle]:
         """Retrieve all game titles associated with an account, and a summary of trophies earned from them.
 
         :param limit: Limit of titles returned, None means to return all trophy titles.
@@ -90,10 +89,10 @@ class TrophyTitles:
         limit_per_request = min(limit, 800) if limit is not None else 800
         while True:
             params = {"limit": limit_per_request, "offset": offset}
-            response = self._request_builder.get(
+            response = await self._request_builder.get(
                 url=f"{BASE_PATH['trophies']}{API_PATH['trophy_titles'].format(account_id=self._account_id)}",
-                params=params,
-            ).json()
+                params=params)
+            response = await response.json()
 
             per_page_items = 0
             trophy_titles: list[dict[Any, Any]] = response.get("trophyTitles")
@@ -147,7 +146,7 @@ class TrophyTitles:
             if offset <= 0:
                 break
 
-    def get_trophy_summary_for_title(self, title_ids: list[str]) -> Iterator[TrophyTitle]:
+    async def get_trophy_summary_for_title(self, title_ids: list[str]) -> AsyncIterator[TrophyTitle]:
         """Retrieve a summary of the trophies earned by a user for specific titles.
 
         :param title_ids: Unique ID of the title
@@ -160,11 +159,11 @@ class TrophyTitles:
 
         """
         params = {"npTitleIds": ",".join(title_ids)}
-        response = self._request_builder.get(
+        response = await self._request_builder.get(
             url=f"{BASE_PATH['trophies']}{API_PATH['trophy_titles_for_title'].format(account_id=self._account_id)}",
             params=params,
-        ).json()
-
+        )
+        response = await response.json()
         for title in response.get("titles"):
             for trophy_title in title.get("trophyTitles"):
                 title_trophy_sum = TrophyTitle(
@@ -199,7 +198,7 @@ class TrophyTitles:
                 yield title_trophy_sum
 
     @staticmethod
-    def get_np_communication_id(request_builder: RequestBuilder, title_id: str, account_id: str) -> str:
+    async def get_np_communication_id(request_builder: RequestBuilder, title_id: str, account_id: str) -> str:
         """Returns the np communication id of title. This is required for requesting detail about a titles trophies.
 
         .. note::
@@ -222,15 +221,16 @@ class TrophyTitles:
         params = {"npTitleIds": f"{title_id},"}
 
         try:
-            response = request_builder.get(
+            response = await request_builder.get(
                 url=f"{BASE_PATH['trophies']}{API_PATH['trophy_titles_for_title'].format(account_id=account_id)}",
-                params=params,
-            ).json()
+                params=params)
+            response = await response.json()
         except (PSNAWPBadRequest, PSNAWPNotFound) as bad_req:
             raise PSNAWPNotFound(f"Could not find a Video Game with Title: {title_id}") from bad_req
 
         if len(response.get("titles")[0].get("trophyTitles")) == 0:
-            raise PSNAWPNotFound(f"Could not find a Video Game with Title: {title_id}. Most likely the user doesn't own the game.")
+            raise PSNAWPNotFound(
+                f"Could not find a Video Game with Title: {title_id}. Most likely the user doesn't own the game.")
 
         np_comm_id: str = response.get("titles")[0].get("trophyTitles")[0].get("npCommunicationId", title_id)
         return np_comm_id

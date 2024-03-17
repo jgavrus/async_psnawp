@@ -11,21 +11,21 @@ from psnawp_api.core.psnawp_exceptions import (
 from tests.unit_tests import my_vcr
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__group_incorrect_args(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPIllegalArgumentError):
             psnawp_fixture.group(group_id="~25C4C5406FD6D50E.763F9A1EB6AB5790", users_list=["Help"])
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__group_with_wrong_id(psnawp_fixture):
     with pytest.raises(PSNAWPNotFound):
         with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
             psnawp_fixture.group(group_id="~25C4C5406FD6D50E.763F9A1EB6AB5791")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__group_with_users(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         example_user = psnawp_fixture.user(online_id="VaultTec_Trading")
@@ -36,7 +36,7 @@ def test_group__group_with_users(psnawp_fixture):
         assert message_info.get("messageUid") == messages[0].get("messageUid")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__group_with_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         last_group = next(psnawp_fixture.me().get_groups(limit=1))
@@ -44,7 +44,7 @@ def test_group__group_with_id(psnawp_fixture):
         group.send_message("Hello World!")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__repr_and_str(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         last_group = next(psnawp_fixture.me().get_groups(limit=1))
@@ -52,7 +52,7 @@ def test_group__repr_and_str(psnawp_fixture):
         str(last_group)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__change_name_dm(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPBadRequest):
@@ -61,7 +61,7 @@ def test_group__change_name_dm(psnawp_fixture):
             group.change_name("Testing API")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__dming_blocked_user(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPForbidden):
@@ -70,7 +70,7 @@ def test_group__dming_blocked_user(psnawp_fixture):
             group.change_name("Testing API")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__change_name(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         example_user = psnawp_fixture.user(online_id="VaultTec_Trading")
@@ -79,7 +79,7 @@ def test_group__change_name(psnawp_fixture):
         group.change_name("Testing API")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_group__leave_group(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         group = next(psnawp_fixture.me().get_groups(limit=1))

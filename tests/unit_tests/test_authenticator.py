@@ -8,7 +8,7 @@ import psnawp_api
 from tests.unit_tests import my_vcr
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_authenticator__access_token_from_refresh_token():
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         psnawp = psnawp_api.psnawp.PSNAWP(os.getenv("NPSSO_CODE"))

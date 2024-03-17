@@ -24,7 +24,7 @@ class TrophySummary:
     "Number of trophies which have been earned by type"
 
     @classmethod
-    def from_endpoint(cls, request_builder: RequestBuilder, account_id: str) -> TrophySummary:
+    async def from_endpoint(cls, request_builder: RequestBuilder, account_id: str) -> TrophySummary:
         """Retrieve an overall summary of the number of trophies earned for a user broken down by
 
         - type
@@ -39,7 +39,9 @@ class TrophySummary:
 
         """
         try:
-            response = request_builder.get(url=f"{BASE_PATH['trophies']}{API_PATH['trophy_summary'].format(account_id=account_id)}").json()
+            response = await request_builder.get(
+                url=f"{BASE_PATH['trophies']}{API_PATH['trophy_summary'].format(account_id=account_id)}")
+            response = await response.json()
         except PSNAWPForbidden as forbidden:
             raise PSNAWPForbidden("The target user has set their trophies visibility to private.") from forbidden
         return cls(

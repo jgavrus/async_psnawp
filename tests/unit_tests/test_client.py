@@ -9,76 +9,76 @@ from psnawp_api.core.psnawp_exceptions import PSNAWPAuthenticationError, PSNAWPN
 from tests.unit_tests import my_vcr
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__authentication():
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         psnawp_api.psnawp.PSNAWP(os.getenv("NPSSO_CODE"))
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__incorrect_npsso():
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPAuthenticationError):
             psnawp_api.psnawp.PSNAWP("dsjfhsdkjfhskjdhlf")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__online_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()
         assert client.online_id == os.getenv("USER_NAME")
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__account_id(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()
         assert re.match(r"\d+", client.account_id)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__get_profile_legacy(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()
         client.get_profile_legacy()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__account_devices(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()
         client.get_account_devices()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__get_friends(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()
         list(client.friends_list())
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__get_groups(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()
         list(client.get_groups(limit=10))
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__available_to_play(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()
         list(client.available_to_play())
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__blocked_list(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()
         client.blocked_list()
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__trophy_summary(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         summary = psnawp_fixture.me().trophy_summary()
@@ -92,21 +92,21 @@ def test_client__trophy_summary(psnawp_fixture):
         assert summary.trophy_level == 1
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__trophy_titles(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         for trophy_title in psnawp_fixture.me().trophy_titles():
             print(trophy_title)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__trophy_titles_for_title(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         for trophy_title in psnawp_fixture.me().trophy_titles_for_title(title_ids=["CUSA12057_00"]):
             print(trophy_title)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__trophies(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
@@ -118,7 +118,7 @@ def test_client__trophies(psnawp_fixture):
                 print(trophy)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__trophy_groups_summary(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         with pytest.raises(PSNAWPNotFound):
@@ -128,14 +128,14 @@ def test_client__trophy_groups_summary(psnawp_fixture):
             psnawp_fixture.me().trophy_groups_summary("NPWR15179_00", "PS4", include_metadata=True)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__title_stats(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         for title in psnawp_fixture.me().title_stats():
             print(title)
 
 
-@pytest.mark.vcr()
+@pytest.mark.asyncio.vcr()
 def test_client__repr_and_str(psnawp_fixture):
     with my_vcr.use_cassette(f"{inspect.currentframe().f_code.co_name}.yaml"):
         client = psnawp_fixture.me()

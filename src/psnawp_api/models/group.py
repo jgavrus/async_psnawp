@@ -3,11 +3,7 @@ from __future__ import annotations
 import json
 from typing import Optional, Iterator, Any
 
-from psnawp_api.core.psnawp_exceptions import (
-    PSNAWPNotFound,
-    PSNAWPBadRequest,
-    PSNAWPForbidden,
-)
+from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPBadRequest, PSNAWPForbidden
 from psnawp_api.models.user import User
 from psnawp_api.utils.endpoints import BASE_PATH, API_PATH
 from psnawp_api.utils.request_builder import RequestBuilder
@@ -16,12 +12,7 @@ from psnawp_api.utils.request_builder import RequestBuilder
 class Group:
     """The Group class manages PSN group endpoints related to messages (Group and Direct Messages)."""
 
-    def __init__(
-        self,
-        request_builder: RequestBuilder,
-        group_id: Optional[str],
-        users: Optional[Iterator[User]],
-    ):
+    def __init__(self, request_builder: RequestBuilder, group_id: Optional[str], users: Optional[Iterator[User]]):
         """Constructor of Group.
 
         .. note::
@@ -50,7 +41,7 @@ class Group:
         elif self.users is not None:
             self._create_group()
 
-    def _create_group(self) -> None:
+    async def _create_group(self) -> None:
         """Creates a new group if it doesn't exist. Doesn't work if user's privacy settings block invites.
 
         :raises: ``PSNAWPForbidden`` If you are Dming a user who has blocked you.
@@ -61,15 +52,16 @@ class Group:
             data = {"invitees": invitees}
 
             try:
-                response = self._request_builder.post(
-                    url=f"{BASE_PATH['gaming_lounge']}{API_PATH['create_group']}",
-                    data=json.dumps(data),
-                ).json()
+                response = await self._request_builder.post(
+                    url=f"{BASE_PATH['gaming_lounge']}{API_PATH['create_group']}", data=json.dumps(data))
+                response = await response.json()
                 self.group_id = response["groupId"]
             except PSNAWPForbidden as forbidden:
-                raise PSNAWPForbidden("The group cannot be created because the user has either set messages to private or has blocked you.") from forbidden
+                raise PSNAWPForbidden(
+                    "The group cannot be created because the user has either "
+                    "set messages to private or has blocked you.") from forbidden
 
-    def change_name(self, group_name: str) -> None:
+    async def change_name(self, group_name: str) -> None:
         """Changes the group name to one specified in arguments.
 
         .. note::
@@ -87,14 +79,16 @@ class Group:
 
         data = {"groupName": {"value": group_name}}
         try:
-            self._request_builder.patch(
+            await self._request_builder.patch(
                 url=f"{BASE_PATH['gaming_lounge']}{API_PATH['group_settings'].format(group_id=self.group_id)}",
                 data=json.dumps(data),
             )
         except PSNAWPBadRequest as bad_req:
-            raise PSNAWPBadRequest(f"The group name of Group ID {self.group_id} does cannot be changed. Group is either a dm or does not exist.") from bad_req
+            raise PSNAWPBadRequest(
+                f"The group name of Group ID {self.group_id} does cannot be changed. "
+                f"Group is either a dm or does not exist.") from bad_req
 
-    def get_group_information(self) -> dict[str, Any]:
+    async def get_group_information(self) -> dict[str, Any]:
         """Gets the group chat information such as about me, avatars, languages etc...
 
         :returns: A dict containing info similar to what is shown below:
@@ -108,21 +102,21 @@ class Group:
         """
 
         param = {
-            "includeFields": "groupName,groupIcon,members,mainThread,joinedTimestamp,modifiedTimestamp,isFavorite,existsNewArrival,partySessions,"
-            "notificationSetting"
+            "includeFields": "groupName,groupIcon,members,mainThread,joinedTimestamp,"
+                             "modifiedTimestamp,isFavorite,existsNewArrival,partySessions,"
+                             "notificationSetting"
         }
 
         try:
-            response: dict[str, Any] = self._request_builder.get(
+            response = await self._request_builder.get(
                 url=f"{BASE_PATH['gaming_lounge']}{API_PATH['group_members'].format(group_id=self.group_id)}",
                 params=param,
-            ).json()
-
-            return response
+            )
+            return await response.json()
         except PSNAWPNotFound as not_found:
             raise PSNAWPNotFound(f"Group ID {self.group_id} does not exist.") from not_found
 
-    def send_message(self, message: str) -> dict[str, str]:
+    async def send_message(self, message: str) -> dict[str, str]:
         """Sends a message in the group.
 
         .. note::
@@ -145,14 +139,14 @@ class Group:
 
         data = {"messageType": 1, "body": message}
 
-        response: dict[str, str] = self._request_builder.post(
+        response = await self._request_builder.post(
             url=f"{BASE_PATH['gaming_lounge']}{API_PATH['send_group_message'].format(group_id=self.group_id)}",
             data=json.dumps(data),
-        ).json()
+        )
 
-        return response
+        return await response.json()
 
-    def get_conversation(self, limit: int = 20) -> dict[str, Any]:
+    async def get_conversation(self, limit: int = 20) -> dict[str, Any]:
         """Gets the conversations in a group.
 
         :param limit: The number of conversations to receive.
@@ -187,12 +181,12 @@ class Group:
 
         param = {"limit": limit}
 
-        response: dict[str, Any] = self._request_builder.get(
+        response = await self._request_builder.get(
             url=f"{BASE_PATH['gaming_lounge']}{API_PATH['conversation'].format(group_id=self.group_id)}",
             params=param,
-        ).json()
+        )
 
-        return response
+        return await response.json()
 
     def leave_group(self) -> None:
         """Leave the current group
@@ -201,7 +195,8 @@ class Group:
 
         """
 
-        self._request_builder.delete(url=f"{BASE_PATH['gaming_lounge']}{API_PATH['leave_group'].format(group_id=self.group_id)}")
+        self._request_builder.delete(
+            url=f"{BASE_PATH['gaming_lounge']}{API_PATH['leave_group'].format(group_id=self.group_id)}")
 
     def __repr__(self) -> str:
         return f"<Group group_id:{self.group_id}>"

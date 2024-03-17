@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, cast, Iterator, Dict
+from typing import Any, cast, AsyncIterator, Dict
 
 from psnawp_api.utils.request_builder import RequestBuilder
 
 
-class ListingGenerator(Iterator[Dict[str, Any]]):
+class ListingGenerator(AsyncIterator[Dict[str, Any]]):
     """Iterator class for generating a list of items from an endpoint."""
 
     def __init__(self, *, request_builder: RequestBuilder, url: str, listing_name: str, params: dict[str, str | int]):
@@ -36,7 +36,7 @@ class ListingGenerator(Iterator[Dict[str, Any]]):
         """
         return self
 
-    def __next__(self) -> dict[str, Any]:
+    async def __anext__(self) -> dict[str, Any]:
         """Return the next item from the iterator.
 
         :returns: The next item from the iterator.
@@ -48,7 +48,7 @@ class ListingGenerator(Iterator[Dict[str, Any]]):
         if self._index >= len(items_list):
             if not self._has_next:
                 raise StopIteration
-            self._fetch_next_page()
+            await self._fetch_next_page()
             self._index = 0
 
         items_list = self._response.get(self._listing_name, [])
@@ -58,9 +58,10 @@ class ListingGenerator(Iterator[Dict[str, Any]]):
         else:
             raise StopIteration
 
-    def _fetch_next_page(self) -> None:
+    async def _fetch_next_page(self) -> None:
         """Fetch the next page of items from the API."""
-        self._response = self._request_builder.get(url=self._url, params=self._params).json()
+        response = await self._request_builder.get(url=self._url, params=self._params)
+        self._response = await response.json()
         self._params["offset"] = self._response.get("nextOffset") or 0  # nextOffset is None when the list ends
         self._has_next = cast(int, self._params["offset"]) > 0
 

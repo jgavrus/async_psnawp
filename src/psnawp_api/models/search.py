@@ -22,7 +22,7 @@ class Search:
         """
         self._request_builder = request_builder
 
-    def universal_search(self, search_query: str, limit: int = 20) -> dict[str, Any]:
+    async def universal_search(self, search_query: str, limit: int = 20) -> dict[str, Any]:
         """Searches the Playstation Website. Note: It does not work as of now and the endpoints returns whole html page.
 
         .. note::
@@ -84,10 +84,11 @@ class Search:
             "languageCode": "en",
             "age": 99,
         }
-        response: dict[str, Any] = self._request_builder.post(url=f"{BASE_PATH['universal_search']}", data=json.dumps(data)).json()
-        return response
+        response = await self._request_builder.post(url=f"{BASE_PATH['universal_search']}",
+                                                    data=json.dumps(data))
+        return await response.json()
 
-    def get_title_id(self, title_name: str) -> tuple[str, str]:
+    async def get_title_id(self, title_name: str) -> tuple[str, str]:
         """Gets the title id from title name using universal search endpoint.
 
         .. warning::
@@ -115,7 +116,9 @@ class Search:
             "languageCode": "en",
             "age": 99,
         }
-        response: dict[str, Any] = self._request_builder.post(url=f"{BASE_PATH['universal_search']}", data=json.dumps(data)).json()
+        response = await self._request_builder.post(url=f"{BASE_PATH['universal_search']}",
+                                                    data=json.dumps(data))
+        response = await response.json()
         result = response["domainResponses"][0]["results"]
         if len(result) >= 1:
             t: tuple[str, str] = (
