@@ -39,10 +39,11 @@ class Group:
         self.group_id = group_id
         self.users = users
 
+    async def init(self):
         if self.group_id is not None:
-            self.get_group_information()
+            await self.get_group_information()
         elif self.users is not None:
-            self._create_group()
+            await self._create_group()
 
     @create_session
     async def _create_group(self, session: ClientSession = None) -> None:

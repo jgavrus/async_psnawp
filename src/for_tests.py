@@ -81,4 +81,7 @@ async def game_trophies():
         print(trophy)
         break
 
+asyncio.run(client_test())
+asyncio.run(user_by_online_id_test())
+asyncio.run(game_search())
 asyncio.run(game_trophies())

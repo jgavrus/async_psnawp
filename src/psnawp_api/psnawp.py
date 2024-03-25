@@ -173,7 +173,9 @@ class PSNAWP:
 
         if (group_id and users_list) or not (group_id or users_list):
             raise PSNAWPIllegalArgumentError("You provide at least Group Id or Users, and not both.")
-        return Group(self._request_builder, group_id=group_id, users=users_list)
+        group = Group(self._request_builder, group_id=group_id, users=users_list)
+        await group.init()
+        return group
 
     async def search(self) -> Search:
         """Creates a new search object
