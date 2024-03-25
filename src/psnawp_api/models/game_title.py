@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Optional, Literal, AsyncIterator
 
+from aiohttp import ClientSession
+
 from psnawp_api.models.trophies.trophy import Trophy, TrophyBuilder
 from psnawp_api.models.trophies.trophy_group import TrophyGroupsSummary, TrophyGroupsSummaryBuilder
 from psnawp_api.models.trophies.trophy_titles import TrophyTitles
 from psnawp_api.utils.endpoints import BASE_PATH, API_PATH
+from psnawp_api.utils.misc import create_session
 from psnawp_api.utils.request_builder import RequestBuilder
 
 
@@ -51,12 +54,18 @@ class GameTitle:
         """
         self._request_builder = request_builder
         self.title_id = title_id
-        if np_communication_id is None:
-            self.np_communication_id = TrophyTitles.get_np_communication_id(request_builder, title_id, account_id)
-        else:
-            self.np_communication_id = np_communication_id
+        self.np_communication_id = np_communication_id
+        self.account_id = account_id
 
-    async def get_details(self) -> list[dict[str, Any]]:
+    async def init(self):
+        if self.np_communication_id is None:
+            self.np_communication_id = await TrophyTitles.get_np_communication_id(self._request_builder, self.title_id,
+                                                                            self.account_id)
+        else:
+            self.np_communication_id = self.np_communication_id
+
+    @create_session
+    async def get_details(self, session: ClientSession = None) -> list[dict[str, Any]]:
         """Get game details such as full name, description, genre, promotional videos/images, etc...
 
         :returns: A list of dicts containing info similar to what is shown below
@@ -72,8 +81,7 @@ class GameTitle:
 
         response = await self._request_builder.get(
             url=f"{BASE_PATH['game_titles']}{API_PATH['title_concept'].format(title_id=self.title_id)}",
-            params=param,
-        )
+            params=param, session=session)
 
         return await response.json()
 
@@ -96,10 +104,8 @@ class GameTitle:
         :raises: ``PSNAWPNotFound`` if you don't have any trophies for that game.
 
         """
-        return TrophyBuilder(
-            request_builder=self._request_builder,
-            np_communication_id=self.np_communication_id,
-        ).game_trophies(platform=platform, trophy_group_id=trophy_group_id, limit=limit)
+        builder = TrophyBuilder(request_builder=self._request_builder, np_communication_id=self.np_communication_id)
+        return builder.game_trophies(platform=platform, trophy_group_id=trophy_group_id, limit=limit)
 
     async def trophy_groups_summary(self, platform: Literal["PS Vita", "PS3", "PS4", "PS5"]) -> TrophyGroupsSummary:
         """Retrieves the trophy groups for a title and their respective trophy count.
@@ -115,7 +121,5 @@ class GameTitle:
         :raises: ``PSNAWPNotFound`` if you don't have any trophies for that game.
 
         """
-        return await TrophyGroupsSummaryBuilder(
-            request_builder=self._request_builder,
-            np_communication_id=self.np_communication_id,
-        ).game_title_trophy_groups_summary(platform=platform)
+        summary = TrophyGroupsSummaryBuilder(request_builder=self._request_builder,np_communication_id=self.np_communication_id)
+        return await summary.game_title_trophy_groups_summary(platform=platform)

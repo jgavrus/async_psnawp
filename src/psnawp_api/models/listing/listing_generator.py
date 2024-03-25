@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any, cast, AsyncIterator, Dict
 
+from aiohttp import ClientSession
+
+from psnawp_api.utils.misc import create_session
 from psnawp_api.utils.request_builder import RequestBuilder
 
 
@@ -58,9 +61,10 @@ class ListingGenerator(AsyncIterator[Dict[str, Any]]):
         else:
             raise StopIteration
 
-    async def _fetch_next_page(self) -> None:
+    @create_session
+    async def _fetch_next_page(self, session: ClientSession = None) -> None:
         """Fetch the next page of items from the API."""
-        response = await self._request_builder.get(url=self._url, params=self._params)
+        response = await self._request_builder.get(url=self._url, params=self._params, session=session)
         self._response = await response.json()
         self._params["offset"] = self._response.get("nextOffset") or 0  # nextOffset is None when the list ends
         self._has_next = cast(int, self._params["offset"]) > 0

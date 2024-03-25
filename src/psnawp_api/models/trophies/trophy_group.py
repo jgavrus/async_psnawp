@@ -3,12 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional, Literal, Any
 
+from aiohttp import ClientSession
 from attrs import define, field
 
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPForbidden
 from psnawp_api.models.trophies.trophy_constants import PlatformType, TrophySet
 from psnawp_api.utils.endpoints import BASE_PATH, API_PATH
-from psnawp_api.utils.misc import iso_format_to_datetime
+from psnawp_api.utils.misc import iso_format_to_datetime, create_session
 from psnawp_api.utils.request_builder import RequestBuilder
 
 
@@ -136,8 +137,9 @@ class TrophyGroupsSummaryBuilder:
         self._request_builder = request_builder
         self.np_communication_id: str = np_communication_id
 
+    @create_session
     async def game_title_trophy_groups_summary(self, platform: Literal["PS Vita", "PS3", "PS4", "PS5"],
-                                               ) -> TrophyGroupsSummary:
+                                               session: ClientSession = None) -> TrophyGroupsSummary:
         """Retrieves the trophy groups for a title and their respective trophy count.
 
         This is most commonly seen in games which have expansions where additional trophies are added.
@@ -160,14 +162,16 @@ class TrophyGroupsSummaryBuilder:
             np_comm_id = self.np_communication_id
             response = await self._request_builder.get(
                 url=f"{BASE_PATH['trophies']}{API_PATH['title_trophy_group'].format(np_communication_id=np_comm_id)}",
-                params=params)
+                params=params, session=session)
             response = await response.json()
         except PSNAWPNotFound as not_found:
             raise PSNAWPNotFound("The following user has no trophies for the given game title.") from not_found
         return _trophy_groups_dict_to_obj(response)
 
-    async def user_trophy_groups_summary(self, account_id: str, platform: Literal["PS Vita", "PS3", "PS4", "PS5"]
-                                         ) -> TrophyGroupsSummary:
+    @create_session
+    async def user_trophy_groups_summary(self, account_id: str,
+                                         platform: Literal["PS Vita", "PS3", "PS4", "PS5"],
+                                         session: ClientSession = None) -> TrophyGroupsSummary:
         """Retrieves the earned trophy groups for a title and their respective trophy count.
 
         This is most commonly seen in games which have expansions where additional trophies are added.
@@ -193,7 +197,7 @@ class TrophyGroupsSummaryBuilder:
             response = await self._request_builder.get(
                 url=f"{BASE_PATH['trophies']}"
                     f"{API_PATH['user_title_trophy_group'].format(account_id=account_id, np_communication_id=np_c_id)}",
-                params=params)
+                params=params, session=session)
             response = await response.json()
         except PSNAWPNotFound as not_found:
             raise PSNAWPNotFound("The following user has no trophies for the given game title.") from not_found
@@ -201,9 +205,10 @@ class TrophyGroupsSummaryBuilder:
             raise PSNAWPForbidden("The following user has made their trophy private.") from forbidden
         return _trophy_groups_dict_to_obj(response)
 
+    @create_session
     async def user_trophy_groups_summary_with_metadata(self, account_id: str,
-                                                       platform: Literal["PS Vita", "PS3", "PS4", "PS5"]
-                                                       ) -> TrophyGroupsSummary:
+                                                       platform: Literal["PS Vita", "PS3", "PS4", "PS5"],
+                                                       session: ClientSession = None) -> TrophyGroupsSummary:
         """Retrieves the earned trophy groups for a title and their respective trophy count along with metadata.
 
         This is most commonly seen in games which have expansions where additional trophies are added.
@@ -227,13 +232,13 @@ class TrophyGroupsSummaryBuilder:
         np_comm_id = self.np_communication_id
         trophy_groups_metadata = await self._request_builder.get(
             url=f"{BASE_PATH['trophies']}{API_PATH['title_trophy_group'].format(np_communication_id=np_comm_id)}",
-            params=params)
+            params=params, session=session)
         trophy_groups_metadata = await trophy_groups_metadata.json()
 
         trophy_groups_user_data = await self._request_builder.get(
             url=f"{BASE_PATH['trophies']}"
                 f"{API_PATH['user_title_trophy_group'].format(account_id=account_id, np_communication_id=np_comm_id)}",
-            params=params)
+            params=params, session=session)
         trophy_groups_user_data = await trophy_groups_user_data.json()
         merged_data = {**trophy_groups_metadata, **trophy_groups_user_data}
         merged_trophy_groups = [{**x[0], **x[1]} for x in zip(trophy_groups_metadata.get("trophyGroups"),

@@ -12,7 +12,6 @@ from psnawp_api.core.psnawp_exceptions import (
     PSNAWPServerError,
     PSNAWPUnauthorized,
 )
-from psnawp_api.utils.misc import create_session
 
 
 async def response_checker(response: ClientResponse) -> None:
@@ -116,12 +115,11 @@ class RequestBuilder:
         :rtype: requests.Response
 
         """
-        headers = await self.auth_headers(session)
+        headers = kwargs.pop('headers', None)
+        if not headers:
+            headers = await self.auth_headers(session)
 
-        params = kwargs.get("params")
-        data = kwargs.get("data")
-
-        response = await session.post(url=kwargs["url"], headers=headers, data=data, params=params)
+        response = await session.post(**kwargs, headers=headers)
 
         await response_checker(response)
         return response

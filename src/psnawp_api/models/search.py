@@ -3,8 +3,11 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from aiohttp import ClientSession
+
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound
 from psnawp_api.utils.endpoints import BASE_PATH
+from psnawp_api.utils.misc import create_session
 from psnawp_api.utils.request_builder import RequestBuilder
 
 
@@ -22,7 +25,9 @@ class Search:
         """
         self._request_builder = request_builder
 
-    async def universal_search(self, search_query: str, limit: int = 20) -> dict[str, Any]:
+    @create_session
+    async def universal_search(self, search_query: str, limit: int = 20, session: ClientSession = None) -> dict[
+        str, Any]:
         """Searches the Playstation Website. Note: It does not work as of now and the endpoints returns whole html page.
 
         .. note::
@@ -33,6 +38,7 @@ class Search:
         :type search_query: str
         :param limit: Limit of number of results
         :type limit: int
+        :param session: ClientSession object
 
         :returns: A dict containing info similar to what is shown below (Not all values are shown because of space limitations):
         :rtype: dict[str, Any]
@@ -85,10 +91,11 @@ class Search:
             "age": 99,
         }
         response = await self._request_builder.post(url=f"{BASE_PATH['universal_search']}",
-                                                    data=json.dumps(data))
+                                                    data=json.dumps(data), session=session)
         return await response.json()
 
-    async def get_title_id(self, title_name: str) -> tuple[str, str]:
+    @create_session
+    async def get_title_id(self, title_name: str, session: ClientSession = None) -> tuple[str, str]:
         """Gets the title id from title name using universal search endpoint.
 
         .. warning::
@@ -98,6 +105,7 @@ class Search:
 
         :param title_name: Video Game title name
         :type title_name: str
+        :param session: ClientSession object
 
         :returns: A tuple containing English Title Name and Title ID
         :rtype: tuple[str, str]
@@ -107,7 +115,7 @@ class Search:
             "searchTerm": title_name,
             "domainRequests": [
                 {
-                    "domain": "ConceptGameMobileApp",
+                    "domain": "GameMobileApp",
                     "pagination": {"cursor": "", "pageSize": 1},
                     "featureFlags": {"isSpartacusEnabled": True},
                 }
@@ -116,15 +124,12 @@ class Search:
             "languageCode": "en",
             "age": 99,
         }
-        response = await self._request_builder.post(url=f"{BASE_PATH['universal_search']}",
-                                                    data=json.dumps(data))
+        response = await self._request_builder.post(url=BASE_PATH['universal_search'], json=data, session=session)
         response = await response.json()
         result = response["domainResponses"][0]["results"]
         if len(result) >= 1:
-            t: tuple[str, str] = (
-                result[0]["conceptProductMetadata"]["nameEn"],
-                result[0]["conceptProductMetadata"]["titleId"],
-            )
+            t: tuple[str, str] = (result[0]["conceptProductMetadata"]["nameEn"],
+                                  result[0]["conceptProductMetadata"]["titleId"])
             title_name, title_id = t
         else:
             raise PSNAWPNotFound("Could not find Game by the that title name.")

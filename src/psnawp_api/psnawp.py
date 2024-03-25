@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import overload, Optional, Any, AsyncIterator
-
-from aiohttp import ClientSession
+from typing import overload, Optional, Any, List
 
 from psnawp_api.core.authenticator import Authenticator
 from psnawp_api.core.psnawp_exceptions import PSNAWPIllegalArgumentError
@@ -12,7 +10,6 @@ from psnawp_api.models.game_title import GameTitle
 from psnawp_api.models.group import Group
 from psnawp_api.models.search import Search
 from psnawp_api.models.user import User
-from psnawp_api.utils.misc import create_session
 from psnawp_api.utils.request_builder import RequestBuilder
 
 logging_level = logging.INFO
@@ -100,6 +97,7 @@ class PSNAWP:
         """
         if not self._request_builder:
             await self.init()
+
         online_id: Optional[str] = kwargs.get("online_id")
         account_id: Optional[str] = kwargs.get("account_id")
 
@@ -110,7 +108,7 @@ class PSNAWP:
         else:
             raise PSNAWPIllegalArgumentError("You must provide at least online ID or account ID.")
 
-    def game_title(self, title_id: str, account_id: str = "6515971742264256071",
+    async def game_title(self, title_id: str, account_id: str,
                    np_communication_id: Optional[str] = None) -> GameTitle:
         """Creates a GameTitle class object from title_id which represents a PlayStation video game title.
 
@@ -143,18 +141,15 @@ class PSNAWP:
         :raises: ``PSNAWPNotFound`` If the user does not have any trophies for that game or the game doesn't exist.
 
         """
-        return GameTitle(self._request_builder, title_id=title_id, account_id=account_id,
+        if not self._request_builder:
+            await self.init()
+
+        game = GameTitle(self._request_builder, title_id=title_id, account_id=account_id,
                          np_communication_id=np_communication_id)
+        await game.init()
+        return game
 
-    @overload
-    async def group(self, *, group_id: str) -> Group:
-        ...
-
-    @overload
-    async def group(self, *, users_list: AsyncIterator[User]) -> Group:
-        ...
-
-    async def group(self, **kwargs: Any) -> Group:
+    async def group(self, *, group_id: str = None, users_list: List[User] = None) -> Group:
         """Creates a group object from a Group ID or from list of users.
 
         .. warning::
@@ -162,8 +157,8 @@ class PSNAWP:
             Passing ``users_list`` will create a new group each time. If you want to continue from the same group. Use group id obtained from
             ``client.get_groups()``
 
-        :param kwargs: group_id (str): The Group ID of a group usually retrieved with the get_groups() method. users_list(Iterator[User]): A list of users of
-            the members in the group.
+        :param group_id:  (str): The Group ID of a group usually retrieved with the get_groups() method.
+        :param users_list: Iterator[User]: A list of users of the members in the group.
 
         :returns: Group Object
         :rtype: Group
@@ -175,12 +170,10 @@ class PSNAWP:
         """
         if not self._request_builder:
             await self.init()
-        group_id: Optional[str] = kwargs.get("group_id")
-        users: Optional[AsyncIterator[User]] = kwargs.get("users_list")
 
-        if (group_id and users) or not (group_id or users):
+        if (group_id and users_list) or not (group_id or users_list):
             raise PSNAWPIllegalArgumentError("You provide at least Group Id or Users, and not both.")
-        return Group(self._request_builder, group_id=group_id, users=users)
+        return Group(self._request_builder, group_id=group_id, users=users_list)
 
     async def search(self) -> Search:
         """Creates a new search object
@@ -190,4 +183,5 @@ class PSNAWP:
         """
         if not self._request_builder:
             await self.init()
+
         return Search(self._request_builder)

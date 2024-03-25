@@ -3,13 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional, Any, AsyncIterator
 
+from aiohttp import ClientSession
 from attrs import define, field
 
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPBadRequest
 from psnawp_api.models.trophies.trophy import Trophy
 from psnawp_api.models.trophies.trophy_constants import TrophySet, PlatformType
 from psnawp_api.utils.endpoints import BASE_PATH, API_PATH
-from psnawp_api.utils.misc import iso_format_to_datetime
+from psnawp_api.utils.misc import iso_format_to_datetime, create_session
 from psnawp_api.utils.request_builder import RequestBuilder
 
 
@@ -198,7 +199,9 @@ class TrophyTitles:
                 yield title_trophy_sum
 
     @staticmethod
-    async def get_np_communication_id(request_builder: RequestBuilder, title_id: str, account_id: str) -> str:
+    @create_session
+    async def get_np_communication_id(request_builder: RequestBuilder, title_id: str, account_id: str,
+                                      session: ClientSession = None) -> str:
         """Returns the np communication id of title. This is required for requesting detail about a titles trophies.
 
         .. note::
@@ -223,7 +226,7 @@ class TrophyTitles:
         try:
             response = await request_builder.get(
                 url=f"{BASE_PATH['trophies']}{API_PATH['trophy_titles_for_title'].format(account_id=account_id)}",
-                params=params)
+                params=params, session=session)
             response = await response.json()
         except (PSNAWPBadRequest, PSNAWPNotFound) as bad_req:
             raise PSNAWPNotFound(f"Could not find a Video Game with Title: {title_id}") from bad_req

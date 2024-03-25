@@ -36,6 +36,7 @@ class Client:
 
         """
         self._account_id = ''
+        self._online_id = ''
         self._request_builder = request_builder
 
     @create_session
@@ -55,8 +56,8 @@ class Client:
             url=f"{BASE_PATH['profile_uri']}{API_PATH['profiles'].format(account_id=await self.account_id())}",
             session=session)
         response = await response.json()
-        online_id: str = response["onlineId"]
-        return online_id
+        self._online_id: str = response["onlineId"]
+        return self._online_id
 
     @create_session
     async def account_id(self, session: ClientSession = None) -> str:
@@ -106,9 +107,10 @@ class Client:
                       "lastOnlineDate,hasBroadcastData),requestMessageFlag,blocking,friendRelation,"
                       "following,consoleAvailability"
         }
-
+        if not self._online_id:
+            await self.online_id(session)
         response = await self._request_builder.get(
-            url=f"{BASE_PATH['legacy_profile_uri']}{API_PATH['legacy_profile'].format(online_id=self.online_id)}",
+            url=f"{BASE_PATH['legacy_profile_uri']}{API_PATH['legacy_profile'].format(online_id=self._online_id)}",
             params=params, session=session)
 
         return await response.json()

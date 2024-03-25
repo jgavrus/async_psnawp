@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional, Literal, Any, AsyncIterator
 
+import aiohttp
 from attrs import define
 
 from psnawp_api.core.psnawp_exceptions import PSNAWPNotFound, PSNAWPForbidden
@@ -104,8 +105,8 @@ class Trophy:
 
 
 async def _get_trophy_from_endpoint(endpoint: str, request_builder: RequestBuilder,
-                                    platform: Literal["PS Vita", "PS3", "PS4", "PS5"], limit: Optional[int]
-                                    ) -> AsyncIterator[Trophy]:
+                                    platform: Literal["PS Vita", "PS3", "PS4", "PS5"],
+                                    limit: Optional[int]) -> AsyncIterator[Trophy]:
     offset = 0
     service_name = "trophy2" if platform == "PS5" else "trophy"
     params: dict[str, str | int] = {"npServiceName": service_name}
@@ -115,8 +116,10 @@ async def _get_trophy_from_endpoint(endpoint: str, request_builder: RequestBuild
 
     while True:
         try:
-            response = await request_builder.get(url=f"{BASE_PATH['trophies']}{endpoint}", params=params)
-            response = await response.json()
+            async with aiohttp.ClientSession() as session:
+                response = await request_builder.get(url=f"{BASE_PATH['trophies']}{endpoint}", params=params,
+                                                     session=session)
+                response = await response.json()
         except PSNAWPNotFound as not_found:
             raise PSNAWPNotFound("The following user has no trophies for the given game title.") from not_found
         except PSNAWPForbidden as forbidden:
@@ -185,15 +188,9 @@ class TrophyBuilder:
         :raises: ``PSNAWPNotFound`` if you don't have any trophies for that game.
 
         """
-        return _get_trophy_from_endpoint(
-            API_PATH["trophies_for_title"].format(
-                np_communication_id=self.np_communication_id,
-                trophy_group_id=trophy_group_id,
-            ),
-            self._request_builder,
-            platform,
-            limit,
-        )
+        url = API_PATH["trophies_for_title"].format(np_communication_id=self.np_communication_id,
+                                                    trophy_group_id=trophy_group_id)
+        return _get_trophy_from_endpoint(url, self._request_builder, platform, limit)
 
     def earned_game_trophies(self, account_id: str, platform: Literal["PS Vita", "PS3", "PS4", "PS5"],
                              trophy_group_id: str, limit: Optional[int]) -> AsyncIterator[Trophy]:
